@@ -17,22 +17,6 @@ app.get("/", (c) => {
   return c.text("Hello Hono!");
 });
 
-app.post("/api/v1/blog", (c) => {
-  return c.text("Hello Hono!");
-});
-
-app.put("/api/v1/blog", (c) => {
-  return c.text("Hello Hono hihihi");
-});
-
-app.get("/api/v1/blog/bulk", (c) => {
-  return c.text("Hello all blog!");
-});
-
-app.get("/api/v1/blog/:id", (c) => {
-  return c.text("Hello Hono! hihihi");
-});
-
 export default app;
 
 // postgresql://Medium_Serverless%20_Clone_owner:8gCUMYX2xBQo@ep-patient-violet-a1q3gnnu.ap-southeast-1.aws.neon.tech/Medium_Serverless%20_Clone?sslmode=require
