@@ -25,7 +25,7 @@ model User {
 model Blog {
   id Int @id @default(autoincrement())
   content String
-  Title String
+  title String
   thumbnail String?
   published Boolean @default(false)
   authorId Int

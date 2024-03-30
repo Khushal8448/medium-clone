@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import z from "zod";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { decode, sign, verify } from "hono/jwt";
@@ -6,6 +7,15 @@ import { decode, sign, verify } from "hono/jwt";
 type Variables = {
   userId: string;
 };
+
+const zodBlog = z.object({
+  id: z.number(),
+  content: z.string(),
+  title: z.string(),
+  thumbnail: z.string().optional(),
+  published: z.boolean(),
+  authorId: z.number(),
+});
 
 export const blogRouter = new Hono<{
   Bindings: {
@@ -18,7 +28,7 @@ export const blogRouter = new Hono<{
 blogRouter.use(async (c, next) => {
   const reqHeader = c.req.header("Authorization");
   if (!reqHeader || !reqHeader.startsWith("Bearer ")) {
-    return c.text("Unauthorized");
+    return c.text("Unauthorized user");
   }
 
   const token = reqHeader.split(" ")[1];
@@ -29,11 +39,41 @@ blogRouter.use(async (c, next) => {
   await next();
 });
 
-blogRouter.post("/", (c) => {
-  const userId = c.get("userId");
-  console.log(userId);
+blogRouter.post("/", async (c) => {
+  const body = await c.req.json();
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
 
-  return c.text("Hello Hono!");
+  console.log(body);
+
+  const userId = c.get("userId");
+  const { success } = zodBlog.safeParse(body);
+  console.log(success);
+
+  if (success) {
+    try {
+      const blog = await prisma.blog.create({
+        data: {
+          title: body.title,
+          content: body.content,
+          thumbnail: body.thumbnail,
+          published: body.published,
+          authorId: +userId,
+        },
+      });
+
+      return c.json({
+        status: 201,
+        message: "Created Blog Successfully :)",
+      });
+    } catch (error: any) {
+      c.status(500);
+      return c.text(error.message);
+    }
+  }
+
+  return c.text("Invalid Data");
 });
 
 blogRouter.put("/", (c) => {
