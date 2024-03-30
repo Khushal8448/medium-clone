@@ -16,7 +16,6 @@ export const blogRouter = new Hono<{
 }>();
 
 blogRouter.use(async (c, next) => {
-  // console.log(c);
   const reqHeader = c.req.header("Authorization");
   if (!reqHeader || !reqHeader.startsWith("Bearer ")) {
     return c.text("Unauthorized");
