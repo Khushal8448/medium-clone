@@ -9,12 +9,10 @@ type Variables = {
 };
 
 const zodBlog = z.object({
-  id: z.number(),
   content: z.string(),
   title: z.string(),
   thumbnail: z.string().optional(),
   published: z.boolean(),
-  authorId: z.number(),
 });
 
 export const blogRouter = new Hono<{
@@ -49,16 +47,12 @@ blogRouter.post("/", async (c) => {
 
   const userId = c.get("userId");
   const { success } = zodBlog.safeParse(body);
-  console.log(success);
 
   if (success) {
     try {
       const blog = await prisma.blog.create({
         data: {
-          title: body.title,
-          content: body.content,
-          thumbnail: body.thumbnail,
-          published: body.published,
+          ...body,
           authorId: +userId,
         },
       });
