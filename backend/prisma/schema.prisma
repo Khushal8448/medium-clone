@@ -19,7 +19,7 @@ model User {
   password String 
   firstName String
   lastName String?
-  posts Blog[]
+  blogs Blog[]
 }
 
 model Blog {
@@ -31,3 +31,4 @@ model Blog {
   authorId Int
   author User @relation(fields: [authorId], references: [id])
 }
+
