@@ -3,17 +3,11 @@ import z from "zod";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { decode, verify } from "hono/jwt";
+import { zodBlog, zodUpdateBlog } from "@khushal_0111/medium-common";
 
 type Variables = {
   userId: string;
 };
-
-const zodBlog = z.object({
-  content: z.string(),
-  title: z.string(),
-  thumbnail: z.string().optional(),
-  published: z.boolean(),
-});
 
 export const blogRouter = new Hono<{
   Bindings: {
@@ -48,14 +42,12 @@ blogRouter.post("/", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  console.log(body);
-
   const userId = c.get("userId");
   const { success } = zodBlog.safeParse(body);
 
   if (success) {
     try {
-      const blog = await prisma.blog.create({
+      await prisma.blog.create({
         data: {
           ...body,
           authorId: +userId,
@@ -81,15 +73,7 @@ blogRouter.put("/", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const userId = c.get("userId");
-
-  // if (userId !== body.authorId)
-  //   return c.json({
-  //     status: 403,
-  //     message: "Invalid user",
-  //   });
-
-  const { success } = zodBlog.safeParse(body);
+  const { success } = zodUpdateBlog.safeParse(body);
 
   if (success) {
     try {

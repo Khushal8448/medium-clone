@@ -3,7 +3,12 @@ import z from "zod";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { decode, sign, verify } from "hono/jwt";
-import { zodSignup, zodSignin } from "@khushal_0111/medium-common";
+import {
+  zodSignup,
+  zodSignin,
+  type signinInput,
+  type signupInput,
+} from "@khushal_0111/medium-common";
 
 export const userRouter = new Hono<{
   Bindings: {
@@ -29,7 +34,7 @@ userRouter.post("/signup", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const body = await c.req.json();
+  const body: signupInput = await c.req.json();
   const { success } = zodSignup.safeParse(body);
 
   if (success) {
@@ -61,7 +66,7 @@ userRouter.post("/signin", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const body: z.infer<typeof zodSignin> = await c.req.json();
+  const body: signinInput = await c.req.json();
 
   const { success } = zodSignin.safeParse(body);
 
