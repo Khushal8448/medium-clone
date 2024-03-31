@@ -3,6 +3,7 @@ import z from "zod";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { decode, sign, verify } from "hono/jwt";
+import { zodSignup, zodSignin } from "@khushal_0111/medium-common";
 
 export const userRouter = new Hono<{
   Bindings: {
@@ -11,17 +12,17 @@ export const userRouter = new Hono<{
   };
 }>();
 
-const zodSignup = z.object({
-  username: z.string().email(),
-  password: z.string().min(6),
-  firstName: z.string().min(1),
-  lastName: z.string().optional(),
-});
+// const zodSignup = z.object({
+//   username: z.string().email(),
+//   password: z.string().min(6),
+//   firstName: z.string().min(1),
+//   lastName: z.string().optional(),
+// });
 
-const zodSignin = z.object({
-  username: z.string().email(),
-  password: z.string().min(6),
-});
+// const zodSignin = z.object({
+//   username: z.string().email(),
+//   password: z.string().min(6),
+// });
 
 userRouter.post("/signup", async (c) => {
   const prisma = new PrismaClient({

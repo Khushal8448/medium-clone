@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import z from "zod";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
-import { decode, sign, verify } from "hono/jwt";
+import { decode, verify } from "hono/jwt";
 
 type Variables = {
   userId: string;
@@ -24,15 +24,20 @@ export const blogRouter = new Hono<{
 }>();
 
 blogRouter.use(async (c, next) => {
-  const reqHeader = c.req.header("Authorization");
-  if (!reqHeader || !reqHeader.startsWith("Bearer ")) {
+  const authHeader = c.req.header("Authorization") || "";
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return c.json({ status: 400, message: "Unauthorized user" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  const verified = await verify(token, c.env.JWT_SECRET);
+  console.log(verified);
+  if (!verified) {
     return c.text("Unauthorized user");
   }
 
-  const token = reqHeader.split(" ")[1];
-  const decodedToken = decode(token);
-
-  c.set("userId", decodedToken.payload.id);
+  c.set("userId", verified.id);
 
   await next();
 });
@@ -70,14 +75,82 @@ blogRouter.post("/", async (c) => {
   return c.text("Invalid Data");
 });
 
-blogRouter.put("/", (c) => {
-  return c.text("Hello Hono hihihi");
+blogRouter.put("/", async (c) => {
+  const body = await c.req.json();
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  const userId = c.get("userId");
+
+  // if (userId !== body.authorId)
+  //   return c.json({
+  //     status: 403,
+  //     message: "Invalid user",
+  //   });
+
+  const { success } = zodBlog.safeParse(body);
+
+  if (success) {
+    try {
+      const blog = await prisma.blog.update({
+        where: {
+          id: body.id,
+        },
+        data: {
+          ...body,
+        },
+      });
+
+      return c.json({
+        status: 201,
+        message: "Updated Blog Successfully :)",
+      });
+    } catch (error: any) {
+      c.status(500);
+      return c.text(error.message);
+    }
+  }
+
+  return c.text("Invalid data");
 });
 
-blogRouter.get("/bulk", (c) => {
-  return c.text("Hello all blog!");
+blogRouter.get("/bulk", async (c) => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  try {
+    const blogs = await prisma.blog.findMany();
+
+    return c.json({
+      status: 201,
+      data: blogs,
+    });
+  } catch (error: any) {
+    c.status(500);
+    return c.text(error.message);
+  }
 });
 
-blogRouter.get("/:id", (c) => {
-  return c.text("Hello Hono! hihihi");
+blogRouter.get("/:id", async (c) => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  const id = c.req.param("id");
+
+  try {
+    const blog = await prisma.blog.findUnique({
+      where: { id: +id },
+    });
+
+    return c.json({
+      status: 201,
+      data: blog,
+    });
+  } catch (error: any) {
+    c.status(500);
+    return c.text(error.message);
+  }
 });
