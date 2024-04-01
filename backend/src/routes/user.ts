@@ -48,10 +48,20 @@ userRouter.post("/signup", async (c) => {
         },
       });
 
+      console.log(user);
+
       const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
       console.log(jwt);
 
-      return c.json({ jwt });
+      return c.json({
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+        },
+        jwt,
+      });
     } catch (error: any) {
       c.status(403);
       return c.text(error.message);
@@ -87,7 +97,15 @@ userRouter.post("/signin", async (c) => {
       const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
       console.log(jwt);
 
-      return c.json({ jwt });
+      return c.json({
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+        },
+        jwt,
+      });
     } catch (error: any) {
       c.status(403);
       return c.text(error.message);
